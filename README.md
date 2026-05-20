@@ -50,11 +50,11 @@ These are estimates with acknowledged assumptions. Fork this repo, challenge the
 
 | Data | Source | Auto-updated? |
 |------|--------|---------------|
-| PSA Official CPI (monthly `off`) | BSP Key Rates public feed (mirrors PSA) | ✅ Auto-updated — script checks weekly, new data monthly |
-| Peso depreciation (monthly `pd`) | BSP `pesodollar.xlsx` — monthly USD/PHP averages, YoY % | ✅ Auto-updated — script checks weekly, new data monthly |
-| Rice adjustment | PSA Price Situationer + PIDS NFA outlet share research | Static (historical constants; 0pp post-2019) |
-| Annual PESO_DEP (year chart) | BSP `pesodollar.xlsx` — annual averages | Manual update per year |
-| Historical CPI 2000–2025 (year chart) | World Bank WDI via FRED | Manual update per year |
+| PSA Official CPI — monthly `off` | BSP Key Rates public feed (mirrors PSA) | ✅ Auto-updated — checks weekly, data publishes monthly |
+| Peso depreciation — monthly `pd` | BSP `pesodollar.xlsx` monthly averages, YoY % | ✅ Auto-updated — checks weekly, data publishes monthly |
+| Peso depreciation — annual `pd` | BSP `pesodollar.xlsx` — 12-month average YoY % | ✅ Auto-updated — recomputed each run from same file |
+| Annual CPI — `off` for year chart | Average of 12 monthly `off` values (auto once year completes) | ✅ Auto-added when December month is collected |
+| Rice adjustment | PSA Price Situationer + PIDS NFA outlet share research | Static — pre-2019 NFA history is fixed; 0pp post-2019 permanently |
 
 All data is public. All sources are government or multilateral. No proprietary data.
 
