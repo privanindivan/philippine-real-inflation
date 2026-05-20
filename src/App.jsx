@@ -169,7 +169,7 @@ function ChartTip({ active, payload, label, c }) {
 
 export default function App() {
   const [dark, setDark] = useState(false);
-  const [tab, setTab] = useState("now");
+  const [tab, setTab] = useState(() => localStorage.getItem('tab') || 'now');
   const [selYear, setSelYear] = useState(2026);
   const [selMonth, setSelMonth] = useState(3);
   const [showPicker, setShowPicker] = useState(false);
@@ -228,7 +228,7 @@ export default function App() {
         </div>
         <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
           {[["now","Now"],["calc","Calculator"],["how","How"]].map(([t,l])=>(
-            <button key={t} onClick={()=>setTab(t)} style={{
+            <button key={t} onClick={()=>{ setTab(t); localStorage.setItem('tab',t); }} style={{
               padding:"7px 20px", borderRadius:8,
               border:`2px solid ${tab===t?c.gold:c.tabB}`,
               background:tab===t?c.gold:"transparent",
