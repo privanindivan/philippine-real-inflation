@@ -1,0 +1,32 @@
+name: Update inflation data
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'  # Every Monday 2am UTC (10am Manila)
+  workflow_dispatch:       # Also allows manual trigger from GitHub UI
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Fetch latest data
+        run: node scripts/fetch-data.js
+
+      - name: Commit if data changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git diff --quiet data.json || (
+            git add data.json
+            git commit -m "data: auto-update $(date +%Y-%m-%d)"
+            git push
+          )

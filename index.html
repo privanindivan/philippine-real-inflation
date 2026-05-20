@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Philippine Real Inflation — what inflation actually feels like vs PSA official CPI"/>
+  <meta property="og:title" content="Philippine Real Inflation"/>
+  <meta property="og:description" content="PSA says 7.2%. Real inflation is 8.1%."/>
+  <meta property="og:image" content="/og-card.png"/>
+  <title>Philippine Real Inflation</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" src="philippine-real-inflation.jsx"></script>
+  <script>
+    ReactDOM.createRoot(document.getElementById('root')).render(
+      React.createElement(App)
+    );
+  </script>
+</body>
+</html>
