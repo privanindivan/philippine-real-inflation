@@ -50,8 +50,8 @@ These are estimates with acknowledged assumptions. Fork this repo, challenge the
 
 | Data | Source | Auto-updated? |
 |------|--------|---------------|
-| PSA Official CPI (monthly `off`) | BSP Key Rates public feed (mirrors PSA) | ✅ Weekly via GitHub Actions |
-| Peso depreciation (monthly `pd`) | BSP `pesodollar.xlsx` — monthly USD/PHP averages, YoY % | ✅ Weekly via GitHub Actions |
+| PSA Official CPI (monthly `off`) | BSP Key Rates public feed (mirrors PSA) | ✅ Auto-updated — script checks weekly, new data monthly |
+| Peso depreciation (monthly `pd`) | BSP `pesodollar.xlsx` — monthly USD/PHP averages, YoY % | ✅ Auto-updated — script checks weekly, new data monthly |
 | Rice adjustment | PSA Price Situationer + PIDS NFA outlet share research | Static (historical constants; 0pp post-2019) |
 | Annual PESO_DEP (year chart) | BSP `pesodollar.xlsx` — annual averages | Manual update per year |
 | Historical CPI 2000–2025 (year chart) | World Bank WDI via FRED | Manual update per year |
