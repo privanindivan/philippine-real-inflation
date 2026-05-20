@@ -571,10 +571,9 @@ export default function App() {
                   </thead>
                   <tbody>
                     {[
-                      ["PSA Official CPI","Philippine Statistics Authority","psa.gov.ph",SOURCES.psa],
-                      ["Peso depreciation","Bangko Sentral ng Pilipinas","bsp.gov.ph",SOURCES.bsp],
+                      ["PSA Official CPI (monthly)","BSP Key Rates feed — mirrors PSA official release","bsp.gov.ph",SOURCES.bsp],
+                      ["Peso depreciation (monthly + annual)","BSP pesodollar.xlsx — monthly USD/PHP averages","bsp.gov.ph",SOURCES.bsp],
                       ["Rice prices","PSA Price Situationer","psa.gov.ph",SOURCES.da],
-                      ["Historical CPI (2000–2014)","World Bank WDI via FRED","fred.stlouisfed.org","https://fred.stlouisfed.org/series/FPCPITOTLZGPHL"],
                     ].map(([data,src,url,href],i,arr)=>(
                       <tr key={data} style={{ borderBottom:i<arr.length-1?`1px solid ${c.border}`:"none" }}>
                         <td style={{ padding:"9px 10px", color:c.text, fontWeight:600 }}>{data}</td>
