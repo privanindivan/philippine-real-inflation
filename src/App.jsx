@@ -15,7 +15,8 @@ const PESO_DEP = {
   2015:1.0, 2016:4.4,  2017:5.8, 2018:5.4, 2019:0,
   2020:0,   2021:0.6,  2022:12.9,2023:2.0, 2024:3.4, 2025:1.6,
 };
-const pesoAdj  = y => PESO_DEP[y] > 0 ? +(PESO_DEP[y] * 0.15).toFixed(2) : 0;
+// symmetric: negative PESO_DEP (appreciation years) would subtract passthrough
+const pesoAdj  = y => +(PESO_DEP[y] * 0.15).toFixed(2);
 const realRate = y => +(OFFICIAL[y] + 0.5 + pesoAdj(y)).toFixed(1);
 
 const PHFlag = ({ size=28 }) => (
@@ -277,7 +278,7 @@ export default function App() {
                       }}>{m.m.split(" ")[0]}</button>
                     ))}
                   </div>
-                  <div style={{ fontSize:10, fontWeight:700, color:c.muted, letterSpacing:1, marginBottom:6 }}>YEAR</div>
+                  <div style={{ fontSize:10, fontWeight:700, color:c.muted, letterSpacing:1, marginBottom:6 }}>YEAR <span style={{ fontWeight:400, letterSpacing:0, textTransform:"none" }}>(no monthly data)</span></div>
                   <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
                     {YEARS.map(y=>(
                       <button key={y} onClick={()=>{ setSelYear(y); setShowPicker(false); }} style={{
@@ -522,10 +523,10 @@ export default function App() {
                 flag:"Updated monthly, first Tuesday after reference month." },
               { title:"Market Rice Adjustment", add:"+0.5pp / yr", color:c.green, src:SOURCES.da,
                 body:"PSA blends NFA subsidized rice prices with commercial prices when sampling. After the 2019 Rice Tariffication Law, NFA barely sells retail rice. Most Filipinos only access commercial rice, which costs more.",
-                flag:"PSA Price Situationer — retail rice prices updated twice monthly, 80 provinces." },
+                flag:"Limitation: 0.5pp is a conservative flat estimate — not computed from actual NFA vs. market price differential. The true gap varies year to year. PSA Price Situationer publishes both; a future version will use the actual differential." },
               { title:"Peso Depreciation Passthrough", add:"Variable", color:c.green, src:SOURCES.bsp,
-                body:"Philippines imports ~30% of household consumption — all fuel, most wheat, many goods. When the peso weakens, import costs hit wholesale immediately. CPI captures it months later.",
-                flag:"BSP publishes daily USD/PHP rates — Table 12, Philippine Peso per US Dollar." },
+                body:"Philippines imports ~30% of household consumption — all fuel, most wheat, many goods. When the peso weakens, import costs hit wholesale immediately. CPI captures it months later. Formula: peso dep% × 30% import share × 50% passthrough rate.",
+                flag:"Caveat: PSA does eventually capture depreciation — this adjustment assumes a ~2-quarter lag. In years following large depreciation, PSA may have already absorbed part of this effect. Appreciation years currently set to zero (no disinflationary offset applied)." },
             ].map(item=>(
               <div key={item.title} style={{ background:c.surface, border:`1px solid ${c.border}`, borderRadius:16, padding:"22px 24px" }}>
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12, gap:12, flexWrap:"wrap" }}>
@@ -539,6 +540,23 @@ export default function App() {
                 </div>
               </div>
             ))}
+            {/* Known gaps */}
+            <div style={{ background:c.surface, border:`1px solid ${c.border}`, borderRadius:16, padding:"22px 24px" }}>
+              <div style={{ fontSize:11, fontWeight:700, letterSpacing:2, color:c.heading, marginBottom:16 }}>KNOWN GAPS — NOT YET IN THE MODEL</div>
+              {[
+                { label:"Housing / Rent", tag:"v2", body:"PSA uses imputed rent, which structurally lags actual market rents — especially in Metro Manila. Empirically this is the largest systematic CPI undercount in developing economies. Not in this version because reliable national rent price series are hard to construct. Planned for v2." },
+                { label:"Income stratification", tag:"v2", body:"Poor households spend ~60% on food vs ~30% for upper-middle income. A flat 'real inflation' number applies one adjustment to all Filipinos. A minimum-wage earner in 2023 faced materially higher real inflation than someone with savings. Regional and income-band breakdowns would make this meaningfully more useful." },
+                { label:"Asymmetric passthrough", tag:"known", body:"Depreciation years add import-driven inflation. Appreciation years (2005–2007, 2010–2012) currently return zero — no disinflationary offset is applied even though import costs fell. This creates a small upward bias over long periods. Will be corrected when BSP appreciation-year data is added." },
+              ].map((gap,i)=>(
+                <div key={i} style={{ paddingBottom:i<2?14:0, marginBottom:i<2?14:0, borderBottom:i<2?`1px solid ${c.border}`:"none" }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:6 }}>
+                    <span style={{ fontSize:14, fontWeight:700 }}>{gap.label}</span>
+                    <span style={{ fontSize:11, fontFamily:"monospace", color:gap.tag==="v2"?c.blue:c.gold, background:c.bg, padding:"2px 10px", borderRadius:999, border:`1px solid ${c.border}` }}>{gap.tag}</span>
+                  </div>
+                  <p style={{ fontSize:13, color:c.muted, lineHeight:1.8, margin:0 }}>{gap.body}</p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
