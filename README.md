@@ -48,14 +48,24 @@ These are estimates with acknowledged assumptions. Fork this repo, challenge the
 
 ## Data Sources
 
-| Data | Source | URL |
-|------|--------|-----|
-| PSA Official CPI | Philippine Statistics Authority | [psa.gov.ph](https://psa.gov.ph/price-indices/cpi-ir) |
-| Peso depreciation | Bangko Sentral ng Pilipinas | [bsp.gov.ph](https://www.bsp.gov.ph/sitepages/statistics/exchangerate.aspx) |
-| Rice prices | PSA Price Situationer | [psa.gov.ph](https://psa.gov.ph/statistics/price-situationer/selected-agri-commodities) |
-| Historical CPI (2000–2014) | World Bank WDI via FRED | [fred.stlouisfed.org](https://fred.stlouisfed.org/series/FPCPITOTLZGPHL) |
+| Data | Source | Auto-updated? |
+|------|--------|---------------|
+| PSA Official CPI (monthly `off`) | BSP Key Rates public feed (mirrors PSA) | ✅ Weekly via GitHub Actions |
+| Peso depreciation (monthly `pd`) | BSP `pesodollar.xlsx` — monthly USD/PHP averages, YoY % | ✅ Weekly via GitHub Actions |
+| Rice adjustment | PSA Price Situationer + PIDS NFA outlet share research | Static (historical constants; 0pp post-2019) |
+| Annual PESO_DEP (year chart) | BSP `pesodollar.xlsx` — annual averages | Manual update per year |
+| Historical CPI 2000–2025 (year chart) | World Bank WDI via FRED | Manual update per year |
 
 All data is public. All sources are government or multilateral. No proprietary data.
+
+### How automation works
+
+A GitHub Actions workflow runs every Monday (2am UTC). It:
+
+1. Fetches `pesodollar.xlsx` from BSP and computes YoY peso depreciation for each existing month (`pd`)
+2. Fetches BSP's Key Rates API (the same feed that powers bsp.gov.ph's homepage ticker) — this carries the latest PSA official CPI figure and its reference period
+3. If a new month appears that isn't in `data.json`, it auto-adds the row with both `off` and `pd`
+4. Commits and pushes if anything changed; Netlify auto-deploys from the push
 
 ---
 

@@ -527,7 +527,7 @@ export default function App() {
             {[
               { title:"PSA Official CPI (from gov)", add:"Base", color:c.heading, src:SOURCES.psa,
                 body:"The official Consumer Price Index published monthly by the Philippine Statistics Authority. We use this as our starting point.",
-                flag:"Updated monthly, first Tuesday after reference month." },
+                flag:"Auto-updated weekly via GitHub Actions — fetched from BSP's public Key Rates feed, which mirrors PSA's official release." },
               { title:"Market Rice Adjustment", add:"Variable", color:c.green, src:SOURCES.da,
                 body:"PSA blended NFA subsidized rice prices with commercial prices when sampling. NFA sold at ₱10–27/kg while commercial rice ranged ₱19–46/kg. After the 2019 Rice Tariffication Law, NFA exited retail entirely — the distortion disappears post-2019.",
                 why:"Year-specific: ~12% of PSA's sampled outlets were NFA outlets (est. from PIDS data on NFA retail share). Multiplied by the actual price gap each year × 8.9% rice CPI weight. 2000: 0.5pp. 2008 crisis: 0.5pp. 2014–2018: 0.3–0.4pp. 2019 onward: 0pp (NFA out of retail).",
@@ -535,7 +535,7 @@ export default function App() {
               { title:"Peso Depreciation Passthrough", add:"Variable", color:c.green, src:SOURCES.bsp,
                 body:"Philippines imports ~35% of household consumption — all fuel, most wheat, many goods. When the peso weakens, import costs hit wholesale immediately. CPI captures it months later. Formula: peso dep% × 35% import share × 65% passthrough rate.",
                 why:"Why 65%? Philippine retailers and wet markets adjust prices fast when import costs rise. The 35% import share counts direct imports plus the import content of locally-produced goods (fuel for transport, fertilizer, packaging). CPI's measured passthrough understates this because it lags by weeks to months.",
-                flag:"BSP publishes daily USD/PHP rates — Table 12, Philippine Peso per US Dollar." },
+                flag:"Auto-updated weekly via GitHub Actions — parsed from BSP pesodollar.xlsx (monthly averages, YoY % change)." },
             ].map(item=>(
               <div key={item.title} style={{ background:c.surface, border:`1px solid ${c.border}`, borderRadius:16, padding:"22px 24px" }}>
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12, gap:12, flexWrap:"wrap" }}>
