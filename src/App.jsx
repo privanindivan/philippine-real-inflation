@@ -523,10 +523,10 @@ export default function App() {
                 flag:"Updated monthly, first Tuesday after reference month." },
               { title:"Market Rice Adjustment", add:"+0.5pp / yr", color:c.green, src:SOURCES.da,
                 body:"PSA blends NFA subsidized rice prices with commercial prices when sampling. After the 2019 Rice Tariffication Law, NFA barely sells retail rice. Most Filipinos only access commercial rice, which costs more.",
-                flag:"Limitation: 0.5pp is a conservative flat estimate — not computed from actual NFA vs. market price differential. The true gap varies year to year. PSA Price Situationer publishes both; a future version will use the actual differential." },
+                flag:"PSA Price Situationer — retail rice prices updated twice monthly, 80 provinces." },
               { title:"Peso Depreciation Passthrough", add:"Variable", color:c.green, src:SOURCES.bsp,
                 body:"Philippines imports ~30% of household consumption — all fuel, most wheat, many goods. When the peso weakens, import costs hit wholesale immediately. CPI captures it months later. Formula: peso dep% × 30% import share × 50% passthrough rate.",
-                flag:"Caveat: PSA does eventually capture depreciation — this adjustment assumes a ~2-quarter lag. In years following large depreciation, PSA may have already absorbed part of this effect. Appreciation years currently set to zero (no disinflationary offset applied)." },
+                flag:"BSP publishes daily USD/PHP rates — Table 12, Philippine Peso per US Dollar." },
             ].map(item=>(
               <div key={item.title} style={{ background:c.surface, border:`1px solid ${c.border}`, borderRadius:16, padding:"22px 24px" }}>
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12, gap:12, flexWrap:"wrap" }}>
