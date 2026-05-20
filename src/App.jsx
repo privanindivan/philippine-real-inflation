@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 const OFFICIAL = {
@@ -172,7 +172,6 @@ export default function App() {
   const [selYear, setSelYear] = useState(2026);
   const [selMonth, setSelMonth] = useState(3);
   const [showPicker, setShowPicker] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [entries, setEntries] = useState([{ id:1, amt:100000, yr:2020, mo:1, rate:0.5 }]);
 
   const updateEntry = (id,field,val) => setEntries(prev=>prev.map(e=>e.id===id?{...e,[field]:val}:e));
@@ -206,36 +205,11 @@ export default function App() {
     }));
   })();
 
-  const nowCanvasRef = useRef(null);
   const c = dark ? DK : TH;
   const cur = selYear === 2026
     ? { ...MONTHS_2026[selMonth], label: MONTHS_2026[selMonth].m }
     : { label: String(selYear), off: OFFICIAL[selYear], real: realRate(selYear), pd: PESO_DEP[selYear]||0 };
   const gap = (cur.real - cur.off).toFixed(1);
-
-  useEffect(() => {
-    if (tab === "now" && nowCanvasRef.current) {
-      drawNumberCard(nowCanvasRef.current, cur.off, cur.real, cur.label);
-    }
-  }, [tab, dark, selYear, selMonth]);
-
-  const copyLink = () => {
-    navigator.clipboard.writeText(window.location.href).then(() => {
-      setCopied(true); setTimeout(()=>setCopied(false), 2000);
-    }).catch(() => {
-      const el = document.createElement("textarea");
-      el.value = window.location.href; document.body.appendChild(el);
-      el.select(); document.execCommand("copy"); document.body.removeChild(el);
-      setCopied(true); setTimeout(()=>setCopied(false), 2000);
-    });
-  };
-
-  const download = (ref) => {
-    const a = document.createElement("a");
-    a.download = "philippine-real-inflation.png";
-    a.href = ref.current.toDataURL("image/png");
-    a.click();
-  };
 
   const tip = useCallback(props => <ChartTip {...props} c={c} />, [dark]);
 
@@ -336,17 +310,6 @@ export default function App() {
                   <div style={{ fontSize:13, fontWeight:700, color:c.red, marginTop:12 }}>(+{gap}pp higher)</div>
                 </div>
               </div>
-            </div>
-
-            <canvas ref={nowCanvasRef} style={{ display:"none" }}/>
-
-            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:8 }}>
-              <button onClick={copyLink} style={{ width:"60%", padding:"10px 0", borderRadius:8, border:`1.5px solid ${c.border}`, background:"transparent", color:c.heading, fontSize:12, fontWeight:700, cursor:"pointer" }}>
-                {copied?"✓ Copied":"🔗 Copy Link"}
-              </button>
-              <button onClick={()=>download(nowCanvasRef)} style={{ width:"60%", padding:"10px 0", borderRadius:8, border:`1.5px solid ${c.gold}`, background:c.gold, color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer" }}>
-                ⬇ Download
-              </button>
             </div>
 
             <div style={{ background:c.surface, border:`1px solid ${c.border}`, borderRadius:16, padding:"20px 24px" }}>
