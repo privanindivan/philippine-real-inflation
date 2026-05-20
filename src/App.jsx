@@ -16,7 +16,8 @@ const PESO_DEP = {
   2015:2.43,  2016:4.19,  2017:5.78,  2018:4.29,  2019:-1.67,
   2020:-4.38, 2021:-0.75, 2022:9.59,  2023:2.07,  2024:2.9,  2025:0.37,
 };
-const pesoAdj  = y => +(PESO_DEP[y] * 0.15).toFixed(2);
+// 35% import share of household consumption × 65% passthrough rate = 0.2275
+const pesoAdj  = y => +(PESO_DEP[y] * 0.2275).toFixed(2);
 const realRate = y => +(OFFICIAL[y] + 0.5 + pesoAdj(y)).toFixed(1);
 
 const PHFlag = ({ size=28 }) => (
@@ -49,7 +50,7 @@ const MONTHLY = [
   { m:"Feb 2026", off:2.4, pd:1.4 },
   { m:"Mar 2026", off:4.1, pd:2.1 },
   { m:"Apr 2026", off:7.2, pd:2.7 },
-].map(r => ({ ...r, real: +(r.off + 0.5 + r.pd * 0.15).toFixed(1) }));
+].map(r => ({ ...r, real: +(r.off + 0.5 + r.pd * 0.2275).toFixed(1) }));
 
 const YEARS = Object.keys(OFFICIAL).map(Number);
 const MONTHS_2026 = MONTHLY;
@@ -168,7 +169,7 @@ function ChartTip({ active, payload, label, c }) {
 }
 
 export default function App() {
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(() => localStorage.getItem('dark') === '1');
   const [tab, setTab] = useState(() => localStorage.getItem('tab') || 'now');
   const [selYear, setSelYear] = useState(2026);
   const [selMonth, setSelMonth] = useState(3);
@@ -236,7 +237,7 @@ export default function App() {
               fontWeight:700, cursor:"pointer", fontSize:13,
             }}>{l}</button>
           ))}
-          <div onClick={()=>setDark(d=>!d)} style={{ display:"flex", alignItems:"center", gap:6, cursor:"pointer", userSelect:"none" }}>
+          <div onClick={()=>setDark(d=>{ const n=!d; localStorage.setItem('dark',n?'1':'0'); return n; })} style={{ display:"flex", alignItems:"center", gap:6, cursor:"pointer", userSelect:"none" }}>
             <span style={{ fontSize:11 }}>☀️</span>
             <div style={{ width:44, height:24, borderRadius:12, background:dark?c.blue:c.faint, position:"relative", transition:"background 0.2s", flexShrink:0 }}>
               <div style={{ width:18, height:18, borderRadius:"50%", background:"#fff", position:"absolute", top:3, left:dark?23:3, transition:"left 0.2s", boxShadow:"0 1px 3px rgba(0,0,0,0.3)" }}/>
@@ -318,7 +319,7 @@ export default function App() {
               {[
                 { label:"PSA Official CPI (from gov)", val:cur.off, color:c.text, pre:"", src:SOURCES.psa },
                 { label:"+ Market rice (strips NFA price)", val:0.5, color:c.green, pre:"+", src:SOURCES.da },
-                { label:"+ Peso depreciation passthrough", val:+(cur.pd*0.15).toFixed(2), color:c.green, pre:"+", src:SOURCES.bsp },
+                { label:"+ Peso depreciation passthrough", val:+(cur.pd*0.2275).toFixed(2), color:c.green, pre:"+", src:SOURCES.bsp },
               ].map((row,i)=>(
                 <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 0", borderBottom:i<2?`1px solid ${c.border}`:"none" }}>
                   <span style={{ fontSize:14, color:c.text, display:"flex", alignItems:"center", gap:8 }}>
@@ -514,7 +515,7 @@ export default function App() {
               <div style={{ background:c.bg, borderRadius:10, padding:"16px 20px", fontFamily:"monospace", fontSize:"clamp(11px, 3.2vw, 14px)", color:c.text, lineHeight:2.4, border:`2px solid ${c.gold}` }}>
                 <div>Real Inflation = PSA Official</div>
                 <div style={{ paddingLeft:"2em" }}>+ 0.5pp (market rice)</div>
-                <div style={{ paddingLeft:"2em" }}>+ peso dep% × 30% × 50%</div>
+                <div style={{ paddingLeft:"2em" }}>+ peso dep% × 35% × 65%</div>
               </div>
             </div>
             {[
@@ -526,8 +527,8 @@ export default function App() {
                 why:"Why 0.5pp? PSA's rice sampling includes NFA-subsidized prices. Actual wet market prices run consistently higher. 0.5pp is a conservative adjustment.",
                 flag:"PSA Price Situationer — retail rice prices updated twice monthly, 80 provinces." },
               { title:"Peso Depreciation Passthrough", add:"Variable", color:c.green, src:SOURCES.bsp,
-                body:"Philippines imports ~30% of household consumption — all fuel, most wheat, many goods. When the peso weakens, import costs hit wholesale immediately. CPI captures it months later. Formula: peso dep% × 30% import share × 50% passthrough rate.",
-                why:"Why 50%? Estimated passthrough rate — not all import cost increases reach retail prices immediately.",
+                body:"Philippines imports ~35% of household consumption — all fuel, most wheat, many goods. When the peso weakens, import costs hit wholesale immediately. CPI captures it months later. Formula: peso dep% × 35% import share × 65% passthrough rate.",
+                why:"Why 65%? Philippine retailers and wet markets adjust prices fast when import costs rise. The 35% import share counts direct imports plus the import content of locally-produced goods (fuel for transport, fertilizer, packaging). CPI's measured passthrough understates this because it lags by weeks to months.",
                 flag:"BSP publishes daily USD/PHP rates — Table 12, Philippine Peso per US Dollar." },
             ].map(item=>(
               <div key={item.title} style={{ background:c.surface, border:`1px solid ${c.border}`, borderRadius:16, padding:"22px 24px" }}>
