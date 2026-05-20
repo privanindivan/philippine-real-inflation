@@ -22,6 +22,20 @@ function fetchBuffer(url) {
   });
 }
 
+function fetchJSON(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json;odata=verbose' } }, res => {
+      const chunks = [];
+      res.on('data', c => chunks.push(c));
+      res.on('end', () => {
+        try { resolve(JSON.parse(Buffer.concat(chunks).toString('utf8'))); }
+        catch (e) { reject(new Error('JSON parse failed: ' + e.message)); }
+      });
+      res.on('error', reject);
+    }).on('error', reject);
+  });
+}
+
 async function getBSPMonthlyRates() {
   console.log('Fetching BSP pesodollar.xlsx...');
   const buf = await fetchBuffer('https://www.bsp.gov.ph/statistics/external/pesodollar.xlsx');
@@ -51,11 +65,36 @@ function computePD(rates, year, month) {
   return +((cur.avg - prev.avg) / prev.avg * 100).toFixed(2);
 }
 
+async function getBSPInflationRate() {
+  console.log('Fetching BSP Key Rates (inflation rate)...');
+  const url = "https://www.bsp.gov.ph/_api/web/lists/GetByTitle('Key%20Rates')/items?$select=Title,Value,Order0,Published_x0020_Date&$orderby=Order0%20asc";
+  const json = await fetchJSON(url);
+  const items = json?.d?.results || [];
+  const inflItem = items.find(i => i.Order0 === 2);
+  if (!inflItem) throw new Error('Inflation rate item (Order0=2) not found in BSP Key Rates list');
+
+  const valueStr = inflItem.Value; // e.g. "7.2%"
+  const periodStr = inflItem.Published_x0020_Date; // e.g. "April 2026"
+
+  const off = parseFloat(valueStr);
+  if (isNaN(off)) throw new Error(`Could not parse inflation rate from: "${valueStr}"`);
+
+  // Parse "April 2026" → "Apr 2026"
+  const parts = periodStr.trim().split(/\s+/);
+  const mIdx = MONTHS_LONG.indexOf(parts[0]);
+  const year = parseInt(parts[1]);
+  if (mIdx < 0 || isNaN(year)) throw new Error(`Could not parse period from: "${periodStr}"`);
+  const label = `${MONTHS_SHORT[mIdx]} ${year}`;
+
+  console.log(`BSP inflation rate: ${valueStr} for ${label}`);
+  return { off, label, month: mIdx + 1, year };
+}
+
 async function main() {
   const data = JSON.parse(fs.readFileSync('data.json', 'utf8'));
   let changed = false;
 
-  // --- Update pd values from BSP ---
+  // --- Update pd values from BSP pesodollar.xlsx ---
   const rates = await getBSPMonthlyRates();
 
   for (const row of data.monthly) {
@@ -71,25 +110,28 @@ async function main() {
     }
   }
 
-  // --- Check for new month in BSP not yet in data.monthly ---
-  const latest = rates.at(-1);
-  if (latest) {
-    const label = `${MONTHS_SHORT[latest.month - 1]} ${latest.year}`;
-    if (!data.monthly.find(r => r.m === label)) {
-      const pd = computePD(rates, latest.year, latest.month);
-      if (pd !== null) {
-        // Placeholder: off must be filled in manually after PSA releases the figure
-        console.log(`NEW MONTH AVAILABLE: ${label} (pd=${pd}). Set off manually from PSA CPI release.`);
-        // Uncomment to auto-add with off=null once PSA figure is confirmed:
-        // data.monthly.push({ m: label, off: null, pd });
-        // changed = true;
-      }
+  // --- Check for new month from BSP Key Rates (PSA official CPI) ---
+  const latest = await getBSPInflationRate();
+  const exists = data.monthly.find(r => r.m === latest.label);
+
+  if (!exists) {
+    const pd = computePD(rates, latest.year, latest.month);
+    if (pd !== null) {
+      data.monthly.push({ m: latest.label, off: latest.off, pd });
+      console.log(`NEW MONTH ADDED: ${latest.label} (off=${latest.off}, pd=${pd})`);
+      changed = true;
+    } else {
+      console.log(`NEW MONTH DETECTED: ${latest.label} (off=${latest.off}) but BSP peso data not yet available for pd — skipping`);
     }
+  } else if (exists.off !== latest.off) {
+    console.log(`off update: ${latest.label}  ${exists.off} → ${latest.off}`);
+    exists.off = latest.off;
+    changed = true;
   }
 
   data.last_updated = new Date().toISOString().split('T')[0];
   fs.writeFileSync('data.json', JSON.stringify(data, null, 2));
-  console.log(changed ? 'data.json updated.' : 'No pd changes.');
+  console.log(changed ? 'data.json updated.' : 'No changes.');
 }
 
 main().catch(err => { console.error(err); process.exit(1); });
