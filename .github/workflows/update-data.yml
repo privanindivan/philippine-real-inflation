@@ -18,7 +18,10 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Fetch latest data
+      - name: Install dependencies
+        run: npm install
+
+      - name: Fetch latest BSP exchange rate data
         run: node scripts/fetch-data.js
 
       - name: Commit if data changed
@@ -27,6 +30,6 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git diff --quiet data.json || (
             git add data.json
-            git commit -m "data: auto-update $(date +%Y-%m-%d)"
+            git commit -m "data: auto-update BSP pd values $(date +%Y-%m-%d)"
             git push
           )

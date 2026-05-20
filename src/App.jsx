@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import appData from "../data.json";
 
 const OFFICIAL = {
   2000:4.0, 2001:5.3, 2002:2.7, 2003:2.3, 2004:4.8,
@@ -55,12 +56,7 @@ const PHFlag = ({ size=28 }) => (
   </svg>
 );
 
-const MONTHLY = [
-  { m:"Jan 2026", off:2.0, pd:1.2 },
-  { m:"Feb 2026", off:2.4, pd:1.4 },
-  { m:"Mar 2026", off:4.1, pd:2.1 },
-  { m:"Apr 2026", off:7.2, pd:2.7 },
-].map(r => ({ ...r, real: +(r.off + 0 + r.pd * 0.2275).toFixed(1) }));
+const MONTHLY = appData.monthly.map(r => ({ ...r, real: +(r.off + 0 + r.pd * 0.2275).toFixed(1) }));
 
 const YEARS = Object.keys(OFFICIAL).map(Number);
 const MONTHS_2026 = MONTHLY;
@@ -319,7 +315,7 @@ export default function App() {
                   <div style={{ fontSize:80, fontWeight:900, color:c.gold, lineHeight:1, letterSpacing:"-3px" }}>
                     {cur.real}<span style={{ fontSize:32, letterSpacing:0 }}>%</span>
                   </div>
-                  <div style={{ fontSize:13, fontWeight:700, color:c.red, marginTop:12 }}>(+{gap}pp higher)</div>
+                  <div style={{ fontSize:13, fontWeight:700, color:parseFloat(gap)>=0?c.red:c.blue, marginTop:12 }}>{parseFloat(gap)>=0?`(+${gap}pp higher)`:`(${gap}pp vs official)`}</div>
                 </div>
               </div>
             </div>
@@ -336,7 +332,7 @@ export default function App() {
                     {row.label}
                     <a href={row.src} target="_blank" rel="noopener noreferrer" style={{ fontSize:11, color:c.blue, fontWeight:600, textDecoration:"underline" }}>source ↗</a>
                   </span>
-                  <span style={{ fontSize:18, fontWeight:800, color:row.color, fontFamily:"monospace" }}>{row.pre}{row.val}%</span>
+                  <span style={{ fontSize:18, fontWeight:800, color:row.color, fontFamily:"monospace" }}>{row.val<0?'':row.pre}{row.val}%</span>
                 </div>
               ))}
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", paddingTop:14, borderTop:`2px solid ${c.border}` }}>
@@ -524,7 +520,7 @@ export default function App() {
               <div style={{ fontSize:11, fontWeight:700, letterSpacing:2, color:c.heading, marginBottom:16 }}>THE FORMULA</div>
               <div style={{ background:c.bg, borderRadius:10, padding:"16px 20px", fontFamily:"monospace", fontSize:"clamp(11px, 3.2vw, 14px)", color:c.text, lineHeight:2.4, border:`2px solid ${c.gold}` }}>
                 <div>Real Inflation = PSA Official</div>
-                <div style={{ paddingLeft:"2em" }}>+ 0.5pp (market rice)</div>
+                <div style={{ paddingLeft:"2em" }}>+ rice adj[year] (0–0.5pp, variable)</div>
                 <div style={{ paddingLeft:"2em" }}>+ peso dep% × 35% × 65%</div>
               </div>
             </div>
