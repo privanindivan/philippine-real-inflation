@@ -1,6 +1,6 @@
 # Philippine Real Inflation
 
-**pri.netlify.app** — An alternative Philippine inflation tracker that shows what inflation actually feels like, not just what the government reports.
+**phri.netlify.app** — An alternative Philippine inflation tracker showing what inflation actually feels like, not just what the government reports.
 
 > PSA Official CPI is real. This project asks: *is it complete?*
 
@@ -10,8 +10,8 @@
 
 The Philippine Statistics Authority (PSA) publishes monthly CPI inflation figures. These are methodologically sound but miss two things that disproportionately affect Filipino households:
 
-1. **Market rice prices** — PSA's sampling includes NFA-subsidized rice, which most Filipinos don't actually buy. Market rice costs more.
-2. **Peso depreciation passthrough** — When the peso weakens, import costs rise immediately at the wholesale level. PSA captures this months later in CPI.
+1. **Market rice prices** — PSA's sampling historically included NFA-subsidized rice outlets. Most Filipinos never accessed NFA rice and paid commercial market prices. After the 2019 Rice Tariffication Law, NFA exited retail entirely.
+2. **Peso depreciation passthrough** — When the peso weakens, import costs hit wholesale immediately. CPI captures it months later.
 
 This project adds both adjustments to produce a **Real Inflation** figure alongside PSA's official number.
 
@@ -21,17 +21,28 @@ This project adds both adjustments to produce a **Real Inflation** figure alongs
 
 ```
 Real Inflation = PSA Official CPI
-              + 0.5pp  (market rice adjustment)
-              + peso dep% × 30% × 50%  (import passthrough)
+              + rice_adj[year]          (year-specific NFA distortion)
+              + peso_dep% × 35% × 65%  (import passthrough)
 ```
 
-**Why 30%?** The Philippines imports roughly 30% of household consumption — all fuel, most wheat, many goods.
+**Why 35% import share?** Philippines imports 100% of petroleum products, 100% of wheat, and significant manufactured goods. Counting the import content of domestically-produced goods (fuel for transport, fertilizer, packaging) pushes effective household consumption exposure to ~35%.
 
-**Why 50%?** Estimated passthrough rate — not all import cost increases reach retail prices immediately.
+**Why 65% passthrough?** Philippine retailers — especially wet markets — adjust prices fast when import costs rise. The 65% rate reflects that most import price shocks reach consumer prices within the year. CPI's measured passthrough understates this because it lags by weeks to months.
 
-**Why 0.5pp for rice?** PSA's rice sampling includes NFA-subsidized prices. Actual wet market prices run consistently higher. 0.5pp is a conservative adjustment.
+**Why year-specific rice?** The NFA-vs-commercial price gap changed every year. NFA sold at ₱10–27/kg while commercial rice ranged ₱19–46/kg. With ~12% of PSA's sampled outlets being NFA outlets (PIDS estimate of NFA retail share), this understated actual rice prices paid by most consumers. Post-2019, the adjustment is zero — NFA is out of the retail market.
 
-These are starting estimates. Fork this repo, challenge them, improve them.
+| Period | Rice Adj | Notes |
+|--------|----------|-------|
+| 2000 | 0.5pp | NFA ₱10–12 vs market ₱19.50 — largest relative gap |
+| 2001–2007 | 0.2–0.3pp | NFA ₱16–17, smaller gap |
+| 2008 | 0.5pp | Global rice crisis — NFA ₱18.25 vs market ₱31–32 |
+| 2009–2013 | 0.2pp | NFA raised to ₱27, market ₱31–35 |
+| 2014–2018 | 0.3–0.4pp | Market rose to ₱38–46 while NFA held at ₱27 |
+| 2019–2025 | 0.0pp | Rice Tariffication Law — NFA exited retail |
+
+**Peso depreciation data** is the BSP official annual average USD/PHP rate from `pesodollar.xlsx` (bsp.gov.ph). Appreciation years produce negative adjustments — a stronger peso reduces import-driven inflation.
+
+These are estimates with acknowledged assumptions. Fork this repo, challenge them, improve them.
 
 ---
 
@@ -42,7 +53,7 @@ These are starting estimates. Fork this repo, challenge them, improve them.
 | PSA Official CPI | Philippine Statistics Authority | [psa.gov.ph](https://psa.gov.ph/price-indices/cpi-ir) |
 | Peso depreciation | Bangko Sentral ng Pilipinas | [bsp.gov.ph](https://www.bsp.gov.ph/sitepages/statistics/exchangerate.aspx) |
 | Rice prices | PSA Price Situationer | [psa.gov.ph](https://psa.gov.ph/statistics/price-situationer/selected-agri-commodities) |
-| Historical CPI (2000–2014) | World Bank WDI via FRED | [fred.stlouisfed.org](https://fred.stlouisfed.org/data/FPCPITOTLZGPHL) |
+| Historical CPI (2000–2014) | World Bank WDI via FRED | [fred.stlouisfed.org](https://fred.stlouisfed.org/series/FPCPITOTLZGPHL) |
 
 All data is public. All sources are government or multilateral. No proprietary data.
 
@@ -53,32 +64,17 @@ All data is public. All sources are government or multilateral. No proprietary d
 - **Now tab** — Official vs Real inflation side by side, filterable by year (2000–present) and month (2026)
 - **Calculator tab** — Enter your savings, bank rate, and deposit date. See what your money is actually worth today vs what PSA claims.
 - **How tab** — Full methodology, formula, and source links
-- **Download** — Shareable image card of the current reading
-- **Dark mode** — Toggle between light and dark
+- **Dark mode** — Persists across refreshes
 
 ---
 
 ## Stack
 
-- **React** (single JSX file, no build step needed for Claude.ai preview)
+- **React 18** — frontend
 - **Recharts** — area chart and line chart
-- **Netlify** — hosting and auto-deploy
-- **GitHub** — version control and open source
-
-- **React** (frontend)
-- **Recharts** — charts
-- **GitHub Actions** — automated monthly data fetching (PSA + BSP)
+- **Vite** — build tool
 - **Netlify** — hosting, auto-deploys on every GitHub push
-
-No database. No server. Data lives in `data.json` in the repo, updated automatically by GitHub Actions every time PSA releases new CPI figures.
-
----
-
-## Monthly Update Process
-
-Fully automated via GitHub Actions. Every Monday the scraper checks PSA and BSP, updates `data.json`, commits, and Netlify deploys automatically.
-
-If the scraper needs a manual override, edit `data.json` directly and push. See `EXECUTION.md` for details.
+- **GitHub** — version control and open source
 
 ---
 
@@ -88,10 +84,9 @@ This project is open source because **methodology transparency is the point**. I
 
 Ways to contribute:
 
-- **Better rice price data** — Regional wet market prices vs PSA's sampled prices
-- **Better peso passthrough estimate** — The 30%/50% figures are estimates. Academic papers on Philippine import passthrough rates welcome.
-- **Regional breakdown** — PSA publishes regional CPI. Adding regional Real Inflation numbers would be valuable.
-- **Historical data before 2000** — PSA has data back to 1997. The Asian financial crisis years (1997–1999) would be interesting context.
+- **Nationwide housing/rent premium** — BSP's years of low rates inflated property and rental prices beyond what PSA's housing component captures. Sourcing a defensible nationwide annual rent index from public data would be the most meaningful next addition.
+- **Regional breakdown** — PSA publishes regional CPI. Adding regional Real Inflation numbers would show how the peso and rice distortions hit provinces differently.
+- **Historical data before 2000** — The Asian financial crisis years (1997–1999) would add important context.
 
 Open a PR or file an issue.
 
