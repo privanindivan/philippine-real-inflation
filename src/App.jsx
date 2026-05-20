@@ -16,9 +16,19 @@ const PESO_DEP = {
   2015:2.43,  2016:4.19,  2017:5.78,  2018:4.29,  2019:-1.67,
   2020:-4.38, 2021:-0.75, 2022:9.59,  2023:2.07,  2024:2.9,  2025:0.37,
 };
+// NFA vs commercial rice gap × ~12% NFA outlet sampling share × 8.9% rice CPI weight
+// Pre-2019: NFA ₱10–27/kg vs commercial ₱19–46/kg. 2019 Rice Tariffication Law → NFA exits retail → 0.
+const RICE_ADJ = {
+  2000:0.5, 2001:0.2, 2002:0.2, 2003:0.2, 2004:0.3,
+  2005:0.3, 2006:0.3, 2007:0.3, 2008:0.5, 2009:0.2,
+  2010:0.2, 2011:0.2, 2012:0.2, 2013:0.2, 2014:0.3,
+  2015:0.3, 2016:0.3, 2017:0.3, 2018:0.4, 2019:0.0,
+  2020:0.0, 2021:0.0, 2022:0.0, 2023:0.0, 2024:0.0, 2025:0.0,
+};
+const riceAdj  = y => RICE_ADJ[y] ?? 0;
 // 35% import share of household consumption × 65% passthrough rate = 0.2275
 const pesoAdj  = y => +(PESO_DEP[y] * 0.2275).toFixed(2);
-const realRate = y => +(OFFICIAL[y] + 0.5 + pesoAdj(y)).toFixed(1);
+const realRate = y => +(OFFICIAL[y] + riceAdj(y) + pesoAdj(y)).toFixed(1);
 
 const PHFlag = ({ size=28 }) => (
   <svg width={size*1.8} height={size} viewBox="0 0 180 90" xmlns="http://www.w3.org/2000/svg" style={{ borderRadius:2, flexShrink:0 }}>
@@ -50,7 +60,7 @@ const MONTHLY = [
   { m:"Feb 2026", off:2.4, pd:1.4 },
   { m:"Mar 2026", off:4.1, pd:2.1 },
   { m:"Apr 2026", off:7.2, pd:2.7 },
-].map(r => ({ ...r, real: +(r.off + 0.5 + r.pd * 0.2275).toFixed(1) }));
+].map(r => ({ ...r, real: +(r.off + 0 + r.pd * 0.2275).toFixed(1) }));
 
 const YEARS = Object.keys(OFFICIAL).map(Number);
 const MONTHS_2026 = MONTHLY;
@@ -209,8 +219,8 @@ export default function App() {
 
   const c = dark ? DK : TH;
   const cur = selYear === 2026
-    ? { ...MONTHS_2026[selMonth], label: MONTHS_2026[selMonth].m }
-    : { label: String(selYear), off: OFFICIAL[selYear], real: realRate(selYear), pd: PESO_DEP[selYear]||0 };
+    ? { ...MONTHS_2026[selMonth], label: MONTHS_2026[selMonth].m, rice: 0 }
+    : { label: String(selYear), off: OFFICIAL[selYear], real: realRate(selYear), pd: PESO_DEP[selYear]||0, rice: RICE_ADJ[selYear]||0 };
   const gap = (cur.real - cur.off).toFixed(1);
 
   const tip = useCallback(props => <ChartTip {...props} c={c} />, [dark]);
@@ -318,7 +328,7 @@ export default function App() {
               <div style={{ fontSize:11, fontWeight:700, letterSpacing:2, color:c.heading, marginBottom:16 }}>WHY IT'S HIGHER</div>
               {[
                 { label:"PSA Official CPI (from gov)", val:cur.off, color:c.text, pre:"", src:SOURCES.psa },
-                { label:"+ Market rice (strips NFA price)", val:0.5, color:c.green, pre:"+", src:SOURCES.da },
+                { label:"+ Market rice (strips NFA price)", val:cur.rice, color:c.green, pre:"+", src:SOURCES.da },
                 { label:"+ Peso depreciation passthrough", val:+(cur.pd*0.2275).toFixed(2), color:c.green, pre:"+", src:SOURCES.bsp },
               ].map((row,i)=>(
                 <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 0", borderBottom:i<2?`1px solid ${c.border}`:"none" }}>
@@ -522,9 +532,9 @@ export default function App() {
               { title:"PSA Official CPI (from gov)", add:"Base", color:c.heading, src:SOURCES.psa,
                 body:"The official Consumer Price Index published monthly by the Philippine Statistics Authority. We use this as our starting point.",
                 flag:"Updated monthly, first Tuesday after reference month." },
-              { title:"Market Rice Adjustment", add:"+0.5pp / yr", color:c.green, src:SOURCES.da,
-                body:"PSA blends NFA subsidized rice prices with commercial prices when sampling. After the 2019 Rice Tariffication Law, NFA barely sells retail rice. Most Filipinos only access commercial rice, which costs more.",
-                why:"Why 0.5pp? PSA's rice sampling includes NFA-subsidized prices. Actual wet market prices run consistently higher. 0.5pp is a conservative adjustment.",
+              { title:"Market Rice Adjustment", add:"Variable", color:c.green, src:SOURCES.da,
+                body:"PSA blended NFA subsidized rice prices with commercial prices when sampling. NFA sold at ₱10–27/kg while commercial rice ranged ₱19–46/kg. After the 2019 Rice Tariffication Law, NFA exited retail entirely — the distortion disappears post-2019.",
+                why:"Year-specific: ~12% of PSA's sampled outlets were NFA outlets (est. from PIDS data on NFA retail share). Multiplied by the actual price gap each year × 8.9% rice CPI weight. 2000: 0.5pp. 2008 crisis: 0.5pp. 2014–2018: 0.3–0.4pp. 2019 onward: 0pp (NFA out of retail).",
                 flag:"PSA Price Situationer — retail rice prices updated twice monthly, 80 provinces." },
               { title:"Peso Depreciation Passthrough", add:"Variable", color:c.green, src:SOURCES.bsp,
                 body:"Philippines imports ~35% of household consumption — all fuel, most wheat, many goods. When the peso weakens, import costs hit wholesale immediately. CPI captures it months later. Formula: peso dep% × 35% import share × 65% passthrough rate.",
