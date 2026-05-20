@@ -65,6 +65,16 @@ function computePD(rates, year, month) {
   return +((cur.avg - prev.avg) / prev.avg * 100).toFixed(2);
 }
 
+// Annual peso depreciation: average of 12 monthly USD/PHP rates, then YoY %
+function computeAnnualPD(rates, year) {
+  const cur  = rates.filter(r => r.year === year);
+  const prev = rates.filter(r => r.year === year - 1);
+  if (cur.length < 12 || prev.length < 12) return null;
+  const avgCur  = cur.reduce((s, r) => s + r.avg, 0) / cur.length;
+  const avgPrev = prev.reduce((s, r) => s + r.avg, 0) / prev.length;
+  return +((avgCur - avgPrev) / avgPrev * 100).toFixed(2);
+}
+
 async function getBSPInflationRate() {
   console.log('Fetching BSP Key Rates (inflation rate)...');
   const url = "https://www.bsp.gov.ph/_api/web/lists/GetByTitle('Key%20Rates')/items?$select=Title,Value,Order0,Published_x0020_Date&$orderby=Order0%20asc";
@@ -73,13 +83,12 @@ async function getBSPInflationRate() {
   const inflItem = items.find(i => i.Order0 === 2);
   if (!inflItem) throw new Error('Inflation rate item (Order0=2) not found in BSP Key Rates list');
 
-  const valueStr = inflItem.Value; // e.g. "7.2%"
-  const periodStr = inflItem.Published_x0020_Date; // e.g. "April 2026"
+  const valueStr = inflItem.Value;
+  const periodStr = inflItem.Published_x0020_Date;
 
   const off = parseFloat(valueStr);
   if (isNaN(off)) throw new Error(`Could not parse inflation rate from: "${valueStr}"`);
 
-  // Parse "April 2026" → "Apr 2026"
   const parts = periodStr.trim().split(/\s+/);
   const mIdx = MONTHS_LONG.indexOf(parts[0]);
   const year = parseInt(parts[1]);
@@ -94,7 +103,7 @@ async function main() {
   const data = JSON.parse(fs.readFileSync('data.json', 'utf8'));
   let changed = false;
 
-  // --- Update pd values from BSP pesodollar.xlsx ---
+  // --- Update monthly pd values from BSP ---
   const rates = await getBSPMonthlyRates();
 
   for (const row of data.monthly) {
@@ -104,13 +113,13 @@ async function main() {
     if (mIdx < 0 || isNaN(year)) continue;
     const pd = computePD(rates, year, mIdx + 1);
     if (pd !== null && pd !== row.pd) {
-      console.log(`pd update: ${row.m}  ${row.pd} → ${pd}`);
+      console.log(`monthly pd update: ${row.m}  ${row.pd} → ${pd}`);
       row.pd = pd;
       changed = true;
     }
   }
 
-  // --- Check for new month from BSP Key Rates (PSA official CPI) ---
+  // --- Check for new monthly entry (PSA official CPI) ---
   const latest = await getBSPInflationRate();
   const exists = data.monthly.find(r => r.m === latest.label);
 
@@ -121,12 +130,45 @@ async function main() {
       console.log(`NEW MONTH ADDED: ${latest.label} (off=${latest.off}, pd=${pd})`);
       changed = true;
     } else {
-      console.log(`NEW MONTH DETECTED: ${latest.label} (off=${latest.off}) but BSP peso data not yet available for pd — skipping`);
+      console.log(`NEW MONTH DETECTED: ${latest.label} (off=${latest.off}) — BSP peso data not yet available, skipping`);
     }
   } else if (exists.off !== latest.off) {
-    console.log(`off update: ${latest.label}  ${exists.off} → ${latest.off}`);
+    console.log(`monthly off update: ${latest.label}  ${exists.off} → ${latest.off}`);
     exists.off = latest.off;
     changed = true;
+  }
+
+  // --- Update annual section ---
+  // Annual pd: computed from BSP monthly rates (12-month average YoY)
+  for (const row of data.annual) {
+    const pd = computeAnnualPD(rates, row.y);
+    if (pd !== null && pd !== row.pd) {
+      console.log(`annual pd update: ${row.y}  ${row.pd} → ${pd}`);
+      row.pd = pd;
+      changed = true;
+    }
+  }
+
+  // Check if a new complete year can be added (all 12 months present in data.monthly)
+  const monthlyYears = {};
+  for (const row of data.monthly) {
+    const [, yr] = row.m.split(' ');
+    const year = parseInt(yr);
+    if (!monthlyYears[year]) monthlyYears[year] = [];
+    monthlyYears[year].push(row.off);
+  }
+  for (const [yearStr, offVals] of Object.entries(monthlyYears)) {
+    const year = parseInt(yearStr);
+    if (offVals.length === 12 && !data.annual.find(r => r.y === year)) {
+      const off = +(offVals.reduce((s, v) => s + v, 0) / 12).toFixed(1);
+      const pd  = computeAnnualPD(rates, year);
+      if (pd !== null) {
+        data.annual.push({ y: year, off, pd });
+        data.annual.sort((a, b) => a.y - b.y);
+        console.log(`NEW YEAR ADDED to annual: ${year} (off=${off}, pd=${pd})`);
+        changed = true;
+      }
+    }
   }
 
   data.last_updated = new Date().toISOString().split('T')[0];

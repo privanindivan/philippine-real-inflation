@@ -2,21 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import appData from "../data.json";
 
-const OFFICIAL = {
-  2000:4.0, 2001:5.3, 2002:2.7, 2003:2.3, 2004:4.8,
-  2005:6.5, 2006:5.5, 2007:2.9, 2008:8.3, 2009:4.2,
-  2010:3.8, 2011:4.7, 2012:3.0, 2013:2.6, 2014:3.6,
-  2015:1.4, 2016:1.3, 2017:2.9, 2018:5.2, 2019:2.5,
-  2020:2.4, 2021:3.9, 2022:5.8, 2023:6.0, 2024:3.2, 2025:1.7,
-};
-// BSP annual average USD/PHP % change: positive=depreciation, negative=appreciation (source: bsp.gov.ph pesodollar.xlsx)
-const PESO_DEP = {
-  2000:11.55, 2001:13.33, 2002:1.18,  2003:4.8,   2004:3.28,
-  2005:-1.73, 2006:-7.35, 2007:-11.19,2008:-3.76, 2009:6.64,
-  2010:-5.6,  2011:-4.15, 2012:-2.57, 2013:0.51,  2014:4.39,
-  2015:2.43,  2016:4.19,  2017:5.78,  2018:4.29,  2019:-1.67,
-  2020:-4.38, 2021:-0.75, 2022:9.59,  2023:2.07,  2024:2.9,  2025:0.37,
-};
+const OFFICIAL = Object.fromEntries(appData.annual.map(r => [r.y, r.off]));
+const PESO_DEP  = Object.fromEntries(appData.annual.map(r => [r.y, r.pd]));
 // NFA vs commercial rice gap × ~12% NFA outlet sampling share × 8.9% rice CPI weight
 // Pre-2019: NFA ₱10–27/kg vs commercial ₱19–46/kg. 2019 Rice Tariffication Law → NFA exits retail → 0.
 const RICE_ADJ = {
