@@ -540,23 +540,6 @@ export default function App() {
                 </div>
               </div>
             ))}
-            {/* Known gaps */}
-            <div style={{ background:c.surface, border:`1px solid ${c.border}`, borderRadius:16, padding:"22px 24px" }}>
-              <div style={{ fontSize:11, fontWeight:700, letterSpacing:2, color:c.heading, marginBottom:16 }}>KNOWN GAPS — NOT YET IN THE MODEL</div>
-              {[
-                { label:"Housing / Rent", tag:"v2", body:"PSA uses imputed rent, which structurally lags actual market rents — especially in Metro Manila. Empirically this is the largest systematic CPI undercount in developing economies. Not in this version because reliable national rent price series are hard to construct. Planned for v2." },
-                { label:"Income stratification", tag:"v2", body:"Poor households spend ~60% on food vs ~30% for upper-middle income. A flat 'real inflation' number applies one adjustment to all Filipinos. A minimum-wage earner in 2023 faced materially higher real inflation than someone with savings. Regional and income-band breakdowns would make this meaningfully more useful." },
-                { label:"Asymmetric passthrough", tag:"known", body:"Depreciation years add import-driven inflation. Appreciation years (2005–2007, 2010–2012) currently return zero — no disinflationary offset is applied even though import costs fell. This creates a small upward bias over long periods. Will be corrected when BSP appreciation-year data is added." },
-              ].map((gap,i)=>(
-                <div key={i} style={{ paddingBottom:i<2?14:0, marginBottom:i<2?14:0, borderBottom:i<2?`1px solid ${c.border}`:"none" }}>
-                  <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:6 }}>
-                    <span style={{ fontSize:14, fontWeight:700 }}>{gap.label}</span>
-                    <span style={{ fontSize:11, fontFamily:"monospace", color:gap.tag==="v2"?c.blue:c.gold, background:c.bg, padding:"2px 10px", borderRadius:999, border:`1px solid ${c.border}` }}>{gap.tag}</span>
-                  </div>
-                  <p style={{ fontSize:13, color:c.muted, lineHeight:1.8, margin:0 }}>{gap.body}</p>
-                </div>
-              ))}
-            </div>
           </div>
         )}
       </div>
