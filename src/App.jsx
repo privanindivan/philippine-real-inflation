@@ -523,9 +523,11 @@ export default function App() {
                 flag:"Updated monthly, first Tuesday after reference month." },
               { title:"Market Rice Adjustment", add:"+0.5pp / yr", color:c.green, src:SOURCES.da,
                 body:"PSA blends NFA subsidized rice prices with commercial prices when sampling. After the 2019 Rice Tariffication Law, NFA barely sells retail rice. Most Filipinos only access commercial rice, which costs more.",
+                why:"Why 0.5pp? PSA's rice sampling includes NFA-subsidized prices. Actual wet market prices run consistently higher. 0.5pp is a conservative adjustment.",
                 flag:"PSA Price Situationer — retail rice prices updated twice monthly, 80 provinces." },
               { title:"Peso Depreciation Passthrough", add:"Variable", color:c.green, src:SOURCES.bsp,
                 body:"Philippines imports ~30% of household consumption — all fuel, most wheat, many goods. When the peso weakens, import costs hit wholesale immediately. CPI captures it months later. Formula: peso dep% × 30% import share × 50% passthrough rate.",
+                why:"Why 50%? Estimated passthrough rate — not all import cost increases reach retail prices immediately.",
                 flag:"BSP publishes daily USD/PHP rates — Table 12, Philippine Peso per US Dollar." },
             ].map(item=>(
               <div key={item.title} style={{ background:c.surface, border:`1px solid ${c.border}`, borderRadius:16, padding:"22px 24px" }}>
@@ -534,12 +536,50 @@ export default function App() {
                   <span style={{ fontSize:12, fontFamily:"monospace", color:item.color, background:c.bg, padding:"4px 12px", borderRadius:999, border:`1px solid ${c.border}` }}>{item.add}</span>
                 </div>
                 <p style={{ fontSize:13, color:c.text, lineHeight:1.8, margin:"0 0 12px" }}>{item.body}</p>
+                {item.why && (
+                  <p style={{ fontSize:12, color:c.muted, lineHeight:1.7, margin:"0 0 12px", fontStyle:"italic" }}>{item.why}</p>
+                )}
                 <div style={{ fontSize:12, background:c.bg, borderRadius:8, padding:"10px 14px", border:`1px solid ${c.border}`, display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, flexWrap:"wrap" }}>
                   <span style={{ color:c.text }}>↳ {item.flag}</span>
                   <a href={item.src} target="_blank" rel="noopener noreferrer" style={{ color:c.blue, fontWeight:700, fontSize:12, textDecoration:"underline", whiteSpace:"nowrap" }}>source ↗</a>
                 </div>
               </div>
             ))}
+
+            {/* DATA SOURCES TABLE */}
+            <div style={{ background:c.surface, border:`1px solid ${c.border}`, borderRadius:16, padding:"22px 24px" }}>
+              <div style={{ fontSize:11, fontWeight:700, letterSpacing:2, color:c.heading, marginBottom:16 }}>DATA SOURCES</div>
+              <div style={{ overflowX:"auto" }}>
+                <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
+                  <thead>
+                    <tr style={{ borderBottom:`2px solid ${c.border}` }}>
+                      {["Data","Source","URL"].map(h=>(
+                        <th key={h} style={{ textAlign:"left", padding:"6px 10px", fontSize:10, fontWeight:700, letterSpacing:1, color:c.muted }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      ["PSA Official CPI","Philippine Statistics Authority","psa.gov.ph",SOURCES.psa],
+                      ["Peso depreciation","Bangko Sentral ng Pilipinas","bsp.gov.ph",SOURCES.bsp],
+                      ["Rice prices","PSA Price Situationer","psa.gov.ph",SOURCES.da],
+                      ["Historical CPI (2000–2014)","World Bank WDI via FRED","fred.stlouisfed.org","https://fred.stlouisfed.org/series/FPCPITOTLZGPHL"],
+                    ].map(([data,src,url,href],i,arr)=>(
+                      <tr key={data} style={{ borderBottom:i<arr.length-1?`1px solid ${c.border}`:"none" }}>
+                        <td style={{ padding:"9px 10px", color:c.text, fontWeight:600 }}>{data}</td>
+                        <td style={{ padding:"9px 10px", color:c.text }}>{src}</td>
+                        <td style={{ padding:"9px 10px" }}>
+                          <a href={href} target="_blank" rel="noopener noreferrer" style={{ color:c.blue, fontWeight:700, textDecoration:"underline", fontSize:12 }}>{url} ↗</a>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p style={{ fontSize:12, color:c.muted, marginTop:14, lineHeight:1.7 }}>
+                All data is public. All sources are government or multilateral. No proprietary data. These are starting estimates — fork the repo, challenge them, improve them.
+              </p>
+            </div>
           </div>
         )}
       </div>
