@@ -166,6 +166,7 @@ export default function App() {
   const [tab, setTab] = useState(() => localStorage.getItem('tab') || 'now');
   const [selYear, setSelYear] = useState(2026);
   const [selMonth, setSelMonth] = useState(3);
+  const [chartFull, setChartFull] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const [entries, setEntries] = useState([{ id:1, amt:100000, yr:2020, mo:1, rate:0.5 }]);
 
@@ -329,9 +330,23 @@ export default function App() {
             </div>
 
             <div style={{ background:c.surface, border:`1px solid ${c.border}`, borderRadius:16, padding:"20px 16px 14px" }}>
-              <div style={{ fontSize:11, fontWeight:700, letterSpacing:2, color:c.heading, marginBottom:16, paddingLeft:8 }}>OFFICIAL vs REAL (2000–2026)</div>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", paddingLeft:8, marginBottom:16, gap:8 }}>
+                <div style={{ fontSize:11, fontWeight:700, letterSpacing:2, color:c.heading }}>
+                  OFFICIAL vs REAL ({chartFull?"2000":"2016"}–2026)
+                </div>
+                <div style={{ display:"flex", gap:4 }}>
+                  {[["recent","Recent"],["full","All time"]].map(([v,l])=>(
+                    <button key={v} onClick={()=>setChartFull(v==="full")} style={{
+                      padding:"3px 10px", borderRadius:6, fontSize:10, fontWeight:700, cursor:"pointer",
+                      border:`1.5px solid ${(v==="full"?chartFull:!chartFull)?c.gold:c.border}`,
+                      background:(v==="full"?chartFull:!chartFull)?c.gold:"transparent",
+                      color:(v==="full"?chartFull:!chartFull)?"#fff":c.muted,
+                    }}>{l}</button>
+                  ))}
+                </div>
+              </div>
               <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={CHART} margin={{ top:4, right:12, left:-16, bottom:4 }}>
+                <AreaChart data={chartFull ? CHART : CHART.filter(d=>{ const y=parseInt(String(d.label)); return isNaN(y)||y>=2016; })} margin={{ top:4, right:12, left:-16, bottom:4 }}>
                   <defs>
                     <linearGradient id="gradOff" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%"  stopColor={c.muted} stopOpacity={0.15}/>
@@ -346,12 +361,14 @@ export default function App() {
                     tick={({x,y,payload})=>{
                       const v = String(payload.value);
                       const isMonth = v.includes("'");
-                      const showYear = ["2000","2005","2010","2015","2020","2025"].includes(v);
+                      const showYear = chartFull
+                        ? ["2000","2005","2010","2015","2020","2025"].includes(v)
+                        : ["2016","2018","2020","2022","2024"].includes(v);
                       if (!isMonth && !showYear) return <g/>;
                       return <text x={x} y={y+10} fill={isMonth?c.gold:c.heading} fontSize={9} textAnchor="middle" fontWeight={isMonth?700:400}>{v}</text>;
                     }}
                   />
-                  <YAxis tick={{ fill:c.heading, fontSize:10 }} axisLine={false} tickLine={false} tickFormatter={v=>v+"%"}/>
+                  <YAxis tick={{ fill:c.heading, fontSize:10 }} axisLine={false} tickLine={false} tickFormatter={v=>v+"%"} domain={[0,'dataMax + 0.5']}/>
                   <Tooltip content={tip}/>
                   <Area type="monotone" dataKey="off"  stroke={c.muted} strokeWidth={2} fill="url(#gradOff)"  dot={false}/>
                   <Area type="monotone" dataKey="real" stroke={c.gold}  strokeWidth={3} fill="url(#gradReal)" dot={false}/>
