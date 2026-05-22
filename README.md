@@ -21,13 +21,16 @@ This project adds both adjustments to produce a **Real Inflation** figure alongs
 
 ```
 Real Inflation = PSA Official CPI
-              + rice_adj[year]          (year-specific NFA distortion)
-              + peso_dep% × 35% × 65%  (import passthrough)
+              + rice_adj[year]                (year-specific NFA distortion)
+              + peso_dep% × 35% × 65%        (if peso weakens — pd > 0)
+              + peso_dep% × 5%                (if peso strengthens — pd < 0)
 ```
 
 **Why 35% import share?** Philippines imports 100% of petroleum products, 100% of wheat, and significant manufactured goods. Counting the import content of domestically-produced goods (fuel for transport, fertilizer, packaging) pushes effective household consumption exposure to ~35%.
 
-**Why 65% passthrough?** Philippine retailers — especially wet markets — adjust prices fast when import costs rise. The 65% rate reflects that most import price shocks reach consumer prices within the year. CPI's measured passthrough understates this because it lags by weeks to months.
+**Why 65% passthrough on the upside?** Philippine retailers — especially wet markets — adjust prices fast when import costs rise. The 65% rate reflects that most import price shocks reach consumer prices within the year. CPI's measured passthrough understates this because it lags by weeks to months.
+
+**Why only 5% passthrough on the downside?** "Rockets and feathers" — when import costs fall (peso strengthens), retailers don't cut prices proportionally; they keep prices sticky and pocket the margin. Same pattern is well documented for fuel: pump prices rise the day crude rises but take weeks to fall. The asymmetric coefficient encodes that consumers see far less of a strong peso than they see of a weak one.
 
 **Why year-specific rice?** The NFA-vs-commercial price gap changed every year. NFA sold at ₱10–27/kg while commercial rice ranged ₱19–46/kg. With ~12% of PSA's sampled outlets being NFA outlets (PIDS estimate of NFA retail share), this understated actual rice prices paid by most consumers. Post-2019, the adjustment is zero — NFA is out of the retail market.
 

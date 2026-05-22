@@ -14,8 +14,13 @@ const RICE_ADJ = {
   2020:0.0, 2021:0.0, 2022:0.0, 2023:0.0, 2024:0.0, 2025:0.0,
 };
 const riceAdj  = y => RICE_ADJ[y] ?? 0;
-// 35% import share of household consumption × 65% passthrough rate = 0.2275
-const pesoAdj  = y => +(PESO_DEP[y] * 0.2275).toFixed(2);
+// Asymmetric passthrough — rockets-and-feathers:
+//   peso weakens (pd>0): 35% import share × 65% passthrough = 0.2275
+//   peso strengthens (pd<0): retailers keep prices sticky, only ~5% downward passthrough
+const PASSTHROUGH_UP = 0.2275;
+const PASSTHROUGH_DN = 0.05;
+const passthroughAdj = pd => +(pd > 0 ? pd * PASSTHROUGH_UP : pd * PASSTHROUGH_DN).toFixed(2);
+const pesoAdj  = y => passthroughAdj(PESO_DEP[y]);
 const realRate = y => +(OFFICIAL[y] + riceAdj(y) + pesoAdj(y)).toFixed(1);
 
 const PHFlag = ({ size=28 }) => (
@@ -43,7 +48,7 @@ const PHFlag = ({ size=28 }) => (
   </svg>
 );
 
-const MONTHLY = appData.monthly.map(r => ({ ...r, real: +(r.off + 0 + r.pd * 0.2275).toFixed(1) }));
+const MONTHLY = appData.monthly.map(r => ({ ...r, real: +(r.off + 0 + passthroughAdj(r.pd)).toFixed(1) }));
 
 const YEARS = Object.keys(OFFICIAL).map(Number);
 const MONTHS_2026 = MONTHLY;
@@ -313,7 +318,7 @@ export default function App() {
               {[
                 { label:"PSA Official CPI (from gov)", val:cur.off, color:c.text, pre:"", src:SOURCES.psa },
                 { label:"+ Market rice (strips NFA price)", val:cur.rice, color:c.green, pre:"+", src:SOURCES.da },
-                { label:"+ Peso depreciation passthrough", val:+(cur.pd*0.2275).toFixed(2), color:c.green, pre:"+", src:SOURCES.bsp },
+                { label:"+ Peso depreciation passthrough", val:passthroughAdj(cur.pd), color:c.green, pre:"+", src:SOURCES.bsp },
               ].map((row,i)=>(
                 <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 0", borderBottom:i<2?`1px solid ${c.border}`:"none" }}>
                   <span style={{ fontSize:14, color:c.text, display:"flex", alignItems:"center", gap:8 }}>
@@ -525,7 +530,8 @@ export default function App() {
               <div style={{ background:c.bg, borderRadius:10, padding:"16px 20px", fontFamily:"monospace", fontSize:"clamp(11px, 3.2vw, 14px)", color:c.text, lineHeight:2.4, border:`2px solid ${c.gold}` }}>
                 <div>Real Inflation = PSA Official</div>
                 <div style={{ paddingLeft:"2em" }}>+ rice adj[year] (0–0.5pp, variable)</div>
-                <div style={{ paddingLeft:"2em" }}>+ peso dep% × 35% × 65%</div>
+                <div style={{ paddingLeft:"2em" }}>+ peso dep% × 35% × 65%  (if peso weakens)</div>
+                <div style={{ paddingLeft:"2em" }}>+ peso dep% × 5%         (if peso strengthens)</div>
               </div>
             </div>
             {[
@@ -538,7 +544,7 @@ export default function App() {
                 flag:"PSA Price Situationer — retail rice prices updated twice monthly, 80 provinces." },
               { title:"Peso Depreciation Passthrough", add:"Variable", color:c.green, src:SOURCES.bsp,
                 body:"Philippines imports ~35% of household consumption — all fuel, most wheat, many goods. When the peso weakens, import costs hit wholesale immediately. CPI captures it months later. Formula: peso dep% × 35% import share × 65% passthrough rate.",
-                why:"Why 65%? Philippine retailers and wet markets adjust prices fast when import costs rise. The 35% import share counts direct imports plus the import content of locally-produced goods (fuel for transport, fertilizer, packaging). CPI's measured passthrough understates this because it lags by weeks to months.",
+                why:"Why 65%? Philippine retailers and wet markets adjust prices fast when import costs rise. The 35% import share counts direct imports plus the import content of locally-produced goods (fuel for transport, fertilizer, packaging). CPI's measured passthrough understates this because it lags by weeks to months. Asymmetric note: when the peso strengthens, retailers don't cut prices proportionally — they pocket the margin. So peso-appreciation years use a much lower 5% passthrough (rockets up, feathers down).",
                 flag:"Auto-updated — script checks weekly, BSP publishes monthly. Parsed from BSP pesodollar.xlsx (monthly averages, YoY % change)." },
             ].map(item=>(
               <div key={item.title} style={{ background:c.surface, border:`1px solid ${c.border}`, borderRadius:16, padding:"22px 24px" }}>
